@@ -3,6 +3,18 @@
 
 -------------------------------------------------------------------------------------------------
 
+-- Find how many times a particular bike has been rented
+SELECT COUNT("id") FROM "rentals"
+WHERE "e_bike_id" = 5;
+
+
+-- Find out how far a particular has travelled in km.
+SELECT SUM("rental_distance_km") FROM "rentals"
+WHERE "e_bike_id" = 5;
+
+
+-------------------------------------------------------------------------------------------------
+
 -- Find all currently rented bikes:
 SELECT * FROM "e_bikes"
 WHERE "id" NOT IN (
@@ -163,8 +175,3 @@ SELECT * FROM "charging_stations";
 SELECT * FROM "available_e_bikes";
 SELECT * FROM "current_rentals_detailed";
 SELECT * FROM "must_charge";
-
-
-
-
-
