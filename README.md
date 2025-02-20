@@ -1,7 +1,9 @@
 # Design Document
 
 By Dave von Deschwanden
-SQLITE DATABASE
+
+TODO:~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+TODO: Video overview: <URL HERE>
 
 ## Scope
 
@@ -100,8 +102,6 @@ The `e_bikes` table includes:
 * `id`, which specifies the unique ID for the e-bike as an `INTEGER`. This column thus has the `PRIMARY KEY` constraint applied.
 * `battery_id`, which is the ID of the battery currently being used in the e-bike as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `battery` table to ensure data integrity.
 * `latest_location_history_id`, which is the ID of the last known location recorded in the e-bikes location history as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `e_bike_location_history` table to ensure data integrity. This is to apply a layer of redundancy against any form of theft of confusion of the e-bikes whereabouts.
-<!-- * `currently_rented`, specifies if the e-bike is currently being rented. It is technically a `BOOL` type, represented here as either a `0` for `FALSE` and `1` for `TRUE`. There is a `NOT NULL` constraint.  -->
-<!-- This was redundant and led to inconsistency with my tables, I made a view instead (rental record exists, but there is no end date yet; ie still ongoing) -->
 * `photo`, which will be a photo of the battery, that will be best stored as a `BLOB`.
 
 
@@ -122,7 +122,6 @@ The `battery` table includes:
 
 * `id`, which specifies the unique ID for the battery as an `INTEGER`. This column thus has the `PRIMARY KEY` constraint applied.
 * `charge_level`, which displays the current amount of charge as an `INTEGER`. This field
-<!-- * `currently_charging`: This also proved redundant as we removed for a view instead. -->
 * `photo`, which will be a photo of the battery, that will be best stored as a `BLOB`.
 
 #### Maintenance Ticket
@@ -200,11 +199,15 @@ As detailed by the diagrams:
 
 ## Optimizations
 
-TODO:~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#### VIEWS
 
-In this section you should answer the following questions:
+* `available_e_bikes` lists the detailed information joining the `e_bikes`, `has_bikes`, `rental_locations` and `batteries` columns to give a quick and effective overview of the e-bikes that are currently available, where and what their current charge is.
 
-* Which optimizations (e.g., indexes, views) did you create? Why?
+* `current_rentals_detailed` conversly details which e-bikes in the system are currently being rented out. This view joins `rentals`, `rental_locations` and `customers` into a single table which gives an overview of which e-bikes are being rented, from where, when and by whom.
+
+* `must_charge` details all the e-bikes that have a charge lower than 30% and thus require consideration for being charged soon. The view joins `e_bikes`,`has_bikes` and `rental_locations` to display which battery is in which e-bike and at what rental address it is. The Subquery checks the charge percentage and the table naturally displays the lowest (most urgent) first.
+
+#### INDEXES
 
 ## Limitations
 
