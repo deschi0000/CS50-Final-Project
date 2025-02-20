@@ -2,8 +2,7 @@
 
 By Dave von Deschwanden
 
-TODO:~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-TODO: Video overview: <URL HERE>
+SQLITE Database for an E-Bike Rental System - CS50 Final Project
 
 ## Scope
 
