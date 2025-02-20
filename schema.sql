@@ -15,6 +15,11 @@ DROP VIEW "available_e_bikes";
 DROP VIEW "current_rentals_detailed";
 DROP VIEW "must_charge";
 
+DROP INDEX "customer_name_index";
+DROP INDEX "rental_customer_index";
+DROP INDEX "location_history_search_index";
+DROP INDEX "rental_time_index";
+
 -- Represent users who will rent e-bikes
 CREATE TABLE "customers" (
     "id" INTEGER,
@@ -283,8 +288,12 @@ VALUES
 (1,5,2,5,"17.31",8,"2024-03-17 08:19:03","2024-03-17 15:19:41",54),
 (4,1,3,13,"11.90",5,"2024-05-21 10:19:42","2024-05-21 14:19:28",34),
 (4,1,4,2,"11.90",5,"2024-05-21 10:19:53","2024-05-21 14:19:21",35),
-(3,4,5,11,"2.45",1,"2024-07-31 09:19:24","2024-07-31 09:29:34",3);
+(3,4,5,11,"2.45",1,"2024-07-31 09:19:24","2024-07-31 09:29:34",3),
+(4,3,5,11,"3.95",2,"2024-08-01 09:21:33","2024-08-01 10:31:32",7);
 
+INSERT INTO "rentals" ("start_location_id","end_location_id","e_bike_id","customer_id",
+    "fare_amount","rental_distance_km","start_time","end_time","charge_consumption")
+VALUES(4,3,5,11,"3.95",2,"2024-08-01 09:21:33","2024-08-01 10:31:32",7);
 
 --  Add rental slips for the rented bikes in progress
 INSERT INTO "rentals" ("start_location_id","e_bike_id","customer_id")
@@ -367,4 +376,57 @@ CREATE VIEW "must_charge" AS
         FROM "charging_sessions"
     )
     ORDER BY "charge_level" ASC;
+
+
+
+-----------------------------------------------------------------------------------
+
+CREATE INDEX "customer_name_index"
+ON "customers" ("first_name", "last_name");
+
+-- SELECT * FROM "rentals"
+-- WHERE "customer_id" = (
+--     SELECT "id" FROM "customers"
+--     WHERE "last_name" = 'Brown'
+-- );
+
+-- |--SCAN rentals
+-- `--SCALAR SUBQUERY 1
+--    `--SCAN customers USING COVERING INDEX customer_name_search
+
+-----------------------------------------------------------------------------------
+
+CREATE INDEX "rental_customer_index"
+ON "rentals" ("customer_id");
+
+CREATE INDEX "location_history_search_index"
+ON "e_bike_location_history" ("e_bike_id");
+
+-- SELECT "latitude", "longitude" FROM "e_bike_location_history"
+-- WHERE "e_bike_id" = (
+--     SELECT "id" FROM "rentals"
+--     WHERE "customer_id" = (
+--         SELECT "id" FROM "customers"
+--         WHERE "last_name" = 'Brown'
+--     )
+-- );
+
+-- QUERY PLAN
+-- |--SEARCH e_bike_location_history USING INDEX location_history_search (e_bike_id=?)
+-- `--SCALAR SUBQUERY 2
+--    |--SEARCH rentals USING COVERING INDEX rental_index (customer_id=?)
+--    `--SCALAR SUBQUERY 1
+--       `--SCAN customers USING COVERING INDEX customer_name_search
+
+-----------------------------------------------------------------------------------
+
+CREATE INDEX "rental_time_index"
+ON "rentals" ("start_time", "end_time");
+
+-- SELECT * FROM "rentals"
+-- WHERE "start_time" > "2025-02-20";
+
+-- QUERY PLAN
+-- `--SEARCH rentals USING INDEX rental_time_index (start_time>?)
+
 
