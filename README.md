@@ -2,7 +2,8 @@
 
 By Dave von Deschwanden
 
-SQLITE Database for an E-Bike Rental System - CS50 Final Project
+TODO:~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+TODO: Video overview: <URL HERE>
 
 ## Scope
 
@@ -207,6 +208,17 @@ As detailed by the diagrams:
 * `must_charge` details all the e-bikes that have a charge lower than 30% and thus require consideration for being charged soon. The view joins `e_bikes`,`has_bikes` and `rental_locations` to display which battery is in which e-bike and at what rental address it is. The Subquery checks the charge percentage and the table naturally displays the lowest (most urgent) first.
 
 #### INDEXES
+
+The following indexes were created to improve lookup performance for customers, rentals, e-bike location histories and rental times. While tables regarding e-bikes and batteries will remain relatively stable in size in the system, focus was instead given to the other tables that are expected to grow as the system scales with more customers and interactions.
+
+* `customer_name_index` Helps speed up searches by first and last names
+
+* `rental_index` Helps to find rental records via customer ids
+
+* `location_history_search_index` Helps with e-bike locations and rental history
+
+* `rental_time_index` Helps finding rentals based on start and end times.
+
 
 ## Limitations
 
