@@ -2,8 +2,7 @@
 
 By Dave von Deschwanden
 
-TODO:~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-TODO: Video overview: <URL HERE>
+Video overview: <https://www.youtube.com/watch?v=HSe4o8eys8Q>
 
 ## Scope
 
@@ -21,7 +20,7 @@ The scope therefore is:
 * **Maintenance Tickets** - A maintenance ticket identifying the e-bike, the problem, when and for how long it is being repaired for, and where.
 * **Maintenance Locations** - The locations where bikes are maintenanced.
 * **Charging Session** - Tables identifying if a battery is being charged; when and where.
-* **Charge Locations** - The locations where batteries are charged.
+* **Charge Stations** - The locations where batteries are charged.
 
 More granular operational roles such as bike redistribution workers, maintenance staff, and administrative users are excluded from this database design to focus on core rental operations.
 While the core tables—Customers, Rentals, Rental Locations, and E-Bike—capture the essential functionality, additional tables were included as a glimpse/thought experiment to explore other considerations for a system like this.
@@ -100,7 +99,7 @@ This table was added for normalization and optimization:
 The `e_bikes` table includes:
 
 * `id`, which specifies the unique ID for the e-bike as an `INTEGER`. This column thus has the `PRIMARY KEY` constraint applied.
-* `battery_id`, which is the ID of the battery currently being used in the e-bike as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `battery` table to ensure data integrity.
+* `battery_id`, which is the ID of the battery currently being used in the e-bike as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `batteries` table to ensure data integrity.
 * `latest_location_history_id`, which is the ID of the last known location recorded in the e-bikes location history as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `e_bike_location_history` table to ensure data integrity. This is to apply a layer of redundancy against any form of theft of confusion of the e-bikes whereabouts.
 * `photo`, which will be a photo of the battery, that will be best stored as a `BLOB`.
 
@@ -111,22 +110,22 @@ The `e_bike_location_history` table includes:
 
 * `id`, which specifies the unique ID for the e-bike location history as an `INTEGER`. This column thus has the `PRIMARY KEY` constraint applied.
 * `e_bike_id`, which is the ID of the e-bike whose location is being monitered as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `e_bike` table to ensure data integrity.
-* `rental_id`, which is the ID of the rental record as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `e_bike` table to ensure data integrity. This attribute will help with quicker querying of location data for any given rental.
+* `rental_id`, which is the ID of the rental record as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `rental_id` table to ensure data integrity. This attribute will help with quicker querying of location data for any given rental.
 * `latitude`, the latitudal value of an e-bike's location at a given time as a `REAL`. To allow calculation of ranges for GPS location, `REAL` is a more ideal choice.
 * `longitude`, the longitudal value of an e-bike's location at a given time as a `REAL`. For the same benefits of computing ranges and values as above, `REAL` is the most suitable choice.
 * `updated_at`, which is a datetime of when this row was inserted to give an e-bike's position. A `NUMERIC` is the appropriate choice. These updates are recorded at a reasonable interval to make sure that the database is not being overloaded with constant writes. A `DEFAULT` of `CURRENT_TIMESTAMP` at row insertion is specified.
 
-#### Battery
+#### Batteries
 
-The `battery` table includes:
+The `batteries` table includes:
 
 * `id`, which specifies the unique ID for the battery as an `INTEGER`. This column thus has the `PRIMARY KEY` constraint applied.
-* `charge_level`, which displays the current amount of charge as an `INTEGER`. This field
+* `charge_level`, which displays the current amount of charge as an `INTEGER`. This field may not be null and has to be constrained to a value between `1` and `100`.
 * `photo`, which will be a photo of the battery, that will be best stored as a `BLOB`.
 
-#### Maintenance Ticket
+#### Maintenance Tickets
 
-The `maintenance_ticket` table includes:
+The `maintenance_tickets` table includes:
 
 * `id`, which specifies the unique ID for the maintenance as an `INTEGER`. This column thus has the `PRIMARY KEY` constraint applied.
 * `maintenance_location_id`,
@@ -144,7 +143,7 @@ The `maintenance_ticket` table includes:
 
 #### Maintenance Locations
 
-The `maintenance_location` table includes:
+The `maintenance_locations` table includes:
 
 * `id`, which specifies the unique ID for the maintenance location as an `INTEGER`. This column thus has the `PRIMARY KEY` constraint applied.
 * `street`, which specifies the street name of the maintenance location as `TEXT`.
@@ -157,12 +156,12 @@ The `maintenance_location` table includes:
 The `charging_sessions` table includes:
 
 * `id`, which specifies the unique ID for the charging session as an `INTEGER`. This column thus has the `PRIMARY KEY` constraint applied.
-* `battery_id`, which is the ID of the battery currently currently in the charging session as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `battery` table to ensure data integrity.
+* `battery_id`, which is the ID of the battery currently currently in the charging session as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `batteries` table to ensure data integrity.
 * `charging_station_id`, which is the ID of the charging station the battery is currently charging at as an `INTEGER`. This column thus has the `FOREIGN KEY` constraint applied, referencing the `id` column in the `charging_station` table to ensure data integrity.
 * `time_charge_start`, the datetime of when the charging started as a `NUMERIC`. A `NOT NULL` constraint is applied as well as a `DEFAULT` of `CURRENT_TIMESTAMP` at row insertion.
 * `time_charge_end`, the datetime of when the charging ended as a `NUMERIC`.
 
-#### Charge Locations
+#### Charging Stations
 
 The `charging_station` table includes:
 
@@ -185,16 +184,16 @@ The below entity relationship diagram describes the relationships among the enti
 
 As detailed by the diagrams:
 * **RENTALS/CUSTOMERS** - A customer may make 0 or many rentals. A rental may only be associated with 1 and only 1 customer.
-* **RENTALS/E-BIKE** - An rental must have 1 and only 1 e-bike associated with it. An e-bike can have 0 rentals, but may have been rented many times.
-* **RENTAL_LOCATION/HAS_BIKE** - A rental location may have 0 e-bikes, or many e-bikes. A row in has_bikes means that 1 bike can only be associated with on rental location.
-* **E-BIKE/HAS_BIKE** - An e-bike can have 0 rows in the has_bikes, but any row associated in that table must have 1 and only 1 bike associated with it.
-* **E_BIKE_LOCATION_HISTORY/E-BIKE** - A e-bike's location history must an e-bike associated with it and only 1 e-bike. An e-bike can must have at least 1 location, but may/will have many.
-* **RENTAL/RENTAL_LOCATION** - A rental must start/stop at at least 1 location and can end at many different locations. A rental location can have 0 rentals or many rentals.
-* **MAINTENANCE_LOCATION/MAINTENANCE** - A maintenance location may have 0 tickets associated with it or may have many. Any ticket must have at least 1 location associated with it or many.
-* **MAINTENANCE_TICKET/E-BIKE** - An e-bike can have 0 tickets, or many associated with it. A single maintenance ticket can have 1 and only 1 e-bike associated with it.
-* **CHARGING_SESSONS/BATTERY** - A charging session can have 1 and only 1 battery, while a battery may not have any sessions, it can only have maximum 1 at a time.
-* **BATTERY/E-BIKE** - A battery may have be in no bikes, but it can only ever be in 1 at 1 time. An e-bike must have a battery in it, and can only ever have 1 at a time.
-* **CHARGING_SESSONS/CHARGING_STATION** - A charging session must be associated with 1 and only 1 charging station. A charging station may have no sessions associated with it, but it can have many.
+* **RENTALS/E-BIKES** - An rental must have 1 and only 1 e-bike associated with it. An e-bike can have 0 rentals, but may have been rented many times.
+* **RENTAL_LOCATIONS/HAS_BIKES** - A rental location may have 0 e-bikes, or many e-bikes. A row in has_bikes means that 1 bike can only be associated with on rental location.
+* **E-BIKES/HAS_BIKES** - An e-bike can have 0 rows in the has_bikes, but any row associated in that table must have 1 and only 1 bike associated with it.
+* **E_BIKE_LOCATION_HISTORY/E-BIKES** - A e-bike's location history must an e-bike associated with it and only 1 e-bike. An e-bike can must have at least 1 location, but may/will have many.
+* **RENTALS/RENTAL_LOCATIONS** - A rental must start/stop at at least 1 location and can end at many different locations. A rental location can have 0 rentals or many rentals.
+* **MAINTENANCE_LOCATIONS/MAINTENANCE TICKETS** - A maintenance location may have 0 tickets associated with it or may have many. Any ticket must have at least 1 location associated with it or many.
+* **MAINTENANCE_TICKETS/E-BIKES** - An e-bike can have 0 tickets, or many associated with it. A single maintenance ticket can have 1 and only 1 e-bike associated with it.
+* **CHARGING_SESSONS/BATTERIES** - A charging session can have 1 and only 1 battery, while a battery may not have any sessions, it can only have maximum 1 at a time.
+* **BATTERIES/E-BIKES** - A battery may have be in no bikes, but it can only ever be in 1 at 1 time. An e-bike must have a battery in it, and can only ever have 1 at a time.
+* **CHARGING_SESSONS/CHARGING_STATIONS** - A charging session must be associated with 1 and only 1 charging station. A charging station may have no sessions associated with it, but it can have many.
 
 
 ## Optimizations
